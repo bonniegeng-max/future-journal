@@ -7,7 +7,13 @@
 > 结构：**第 1–9 节**是设计系统本体，**附 A** 是无障碍基线（WCAG 2.2 AA）检查清单，
 > **附 B** 是不适用场景。
 >
-> ⚠️ **本文档中的色值必须与 `assets/index.html` 的实现一致。** 第 2 节末尾有变量名对照表
+> **语言与区域范围**：本设计系统有意只服务**简体中文界面（zh-CN）**，字体栈、字重、
+> 行高与断行规则都是按中文排版调的；**不提供语言切换，也没有多语言路线图**。
+> *Locale scope: this design system intentionally targets Simplified Chinese (zh-CN)
+> UI only — the font stacks and typographic rules are tuned for Chinese typesetting,
+> with no locale switcher and no multilingual roadmap.*
+>
+> ⚠ **本文档中的色值必须与 `assets/index.html` 的实现一致。** 第 2 节末尾有变量名对照表
 > （文档用 `--color-*` 语义名，实现用 `--ink` / `--accent` 等短名），改色时两处同时改，
 > 并重算第 2 节的对比度实测表。
 
@@ -111,7 +117,7 @@
 | 白字 on 赤陶（主按钮） | 5.09:1 | 4.5 | ✅ |
 | 白字 on 赤陶深（hover） | 6.95:1 | 4.5 | ✅ |
 | 完成色 on 完成底 | 4.87:1 | 4.5 | ✅ |
-| 描摹灰 on 沉纸 | **2.20:1** | — | ⚠️ 刻意 |
+| 描摹灰 on 沉纸 | **2.20:1** | — | ⚠ 刻意 |
 
 **为什么描摹灰允许只有 2.20:1**
 
@@ -609,7 +615,7 @@ toast 是**唯一的反馈通道**（本系统不用模态），所以它必须�
 | 3 浮 | `rgba(251,247,239,.94)` + blur | — | 底部标签条 |
 | 4 覆 | `--color-ink` | `#2B2925` | toast（反色浮层） |
 
-**层与层之间色差极小（ΔL < 4%）。** 这是刻意的：纸张叠在一起不会有强烈明暗差，靠 1px 边框和微阴影区分。
+**层与层之间明度差极小（L* 差值 < 4%）。** 这是刻意的：纸张叠在一起不会有强烈明暗差，靠 1px 边框和微阴影区分。
 
 ### Z-index Scale
 

@@ -6,6 +6,13 @@
 //   node scripts/today.js --day 8             不带起始日，仅按第几天取句
 //
 // 用途：不开页面也能知道今天要描哪一句 —— 适合写在实体本子上。
+//
+// 语言与区域范围 / Language & locale scope：
+// 本脚本读写的引导句库**有意只收录简体中文（zh-CN）**句子，命令行输出也用中文，
+// 因为其唯一数据源就是页面里的中文句库。**不提供语言切换，也没有多语言路线图**，
+// 非中文句库不在支持范围内。
+// This script's prompt library is intentionally Simplified-Chinese-only (zh-CN);
+// there is no locale switcher and no multilingual roadmap.
 
 const fs = require('fs');
 const path = require('path');

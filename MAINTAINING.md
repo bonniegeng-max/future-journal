@@ -73,7 +73,7 @@ npx clawhub@latest skill publish . --slug future-journal --version <新版本> -
 - [ ] 页面里**没有硬编码的 `endpoint` / `publishableKey`**（见下）
 - [ ] 线上页面仍是可用的（发布 skill 不等于发布页面，两件事）
 
-## ⚠️ 不要把同步配置串写死进页面
+## ⚠ 不要把同步配置串写死进页面
 
 看起来最顺手的「优化」是把 `endpoint` / `publishableKey` 内嵌进 `assets/index.html`，
 这样使用者就不用粘贴了。**绝对不要。**

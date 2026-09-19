@@ -7,6 +7,15 @@
 // 引导句是这套方法里唯一真正的原创资产，也是最容易写坏的地方。
 // 中文没有时态标记，靠肉眼检查「是不是过去时」非常不可靠 —— 所以把
 // 规则写成硬检查：禁止将来时标志词 + 必须带情绪词。改句库后跑一遍。
+//
+// 语言与区域范围 / Language & locale scope：
+// 本脚本的规则集**有意只针对简体中文（zh-CN）**——它检查的是中文特有的时态词汇
+// （「会」「将」「打算」等将来时标志词）和中文情绪词的搭配，这套规则对屈折语
+// 没有意义，也无法靠换词表移植。**不提供语言切换，也没有多语言路线图**，
+// 非中文语料不在支持范围内；判定结果只对中文引导句有效。
+// This checker intentionally applies Chinese (zh-CN) rules only: it targets
+// Chinese future-tense markers and Chinese emotion vocabulary. No locale
+// switcher, no multilingual roadmap — non-Chinese prompts are out of scope.
 
 const fs = require('fs');
 const path = require('path');

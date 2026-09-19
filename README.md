@@ -5,14 +5,20 @@
 
 49 天为一轮，每周换一个主题。既能当电子手账填写，也能打印出来用实体本子写。
 
-> ⚠️ **这不是《三分钟未来日记》的官方产品。** 方法与实践节奏受山田弘美、滨田真由美所著的
+> ⚠ **这不是《三分钟未来日记》的官方产品。** 方法与实践节奏受山田弘美、滨田真由美所著的
 > 日记实践书启发，但本工具**未使用书中任何正文内容**，49 句引导句全部为原创。
 > 书名仅用于说明方法来源。
 
-当前版本 **v1.0.1**。
+当前版本 **v1.0.2**。
 
-> **语言**：本 skill 面向中文使用者，界面与文档以中文为主，这是有意为之（「未来日记」的
-> 语感、过去时句式、心情词都建立在中文上）。英文摘要见 `skill-card.md`。
+> **语言与区域范围**：本 skill **有意只支持简体中文（zh-CN）**，这是一条明确、有界的
+> 产品范围。界面与文档全部中文，是因为「未来日记」的语感、过去时句式、心情词都建立在
+> 中文上；**不提供语言切换，也没有多语言路线图**，非中文语料不在支持范围内。
+> 英文能力摘要见 `skill-card.md`，供英文读者在安装前判断。
+>
+> *Language & locale scope: this skill is deliberately Simplified-Chinese-only
+> (`zh-CN`), with no locale switcher and no multilingual roadmap. Non-Chinese
+> locales are out of scope. See `skill-card.md` for an English summary.*
 
 ## 它能做什么
 

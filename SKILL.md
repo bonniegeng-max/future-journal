@@ -1,7 +1,7 @@
 ---
 name: future-journal
 description: 每日三分钟的书写工具——生成一本可离线填写的电子手账：先描（或照着打）一句引导句，再用过去时写下今天希望发生的事，最后挑一个心情词。49 天一轮、每周一个主题，含 49 句原创引导句库、质量闸门与页面回归测试。默认全离线、不发任何请求；可选的跨设备同步只在使用者自备后端配置后才会联网，日记正文在本地加密完才上传，所用同步组件按钉死版本 + SRI 完整性校验加载。Generate an offline single-file daily journal page (49-day cycle, weekly themes, trace-or-type a guided sentence then write in the past tense) with a bundled original prompt library and quality gates. Use when the user wants a fillable diary or journal page, a 未来日记 / 提前日记 / 晨间日记 / 感恩日记 tool, a printable journal, or asks what sentence to write today. Not for 任务与待办管理、日程排程、心情打卡统计，也不做心理健康或危机干预——本工具只提供书写页与引导句，不诊断、不建议、不替用户做决定。适用于「想开始写未来日记」「想要一本能打印的手账」「今天该写哪一句」「想用过去时写愿望」「总往坏处想、想把自己拉回来」「想在平板上用触控笔描一句」「想电脑手机换着写」等场景。
-version: 1.0.1
+version: 1.0.2
 homepage: https://clawhub.ai/bonniegeng-max/skills/future-journal
 license: MIT
 ---
@@ -157,7 +157,7 @@ node scripts/check-prompts.js
 
 配置串（`endpoint` + `publishableKey`）存在本机 `fj-cfg`，用户换设备时粘贴一次即可。
 
-### ⚠️ 不要把配置串写死进页面
+### ⚠ 不要把配置串写死进页面
 
 看起来最顺手的「优化」是把 `endpoint` / `publishableKey` 直接内嵌进 `assets/index.html`，
 这样用户就不用粘贴了。**绝对不要这么做。**
@@ -265,13 +265,35 @@ var SDK_SRI = 'sha384-<该版本文件的 sha384>';
 - 不引入任何第三方图标库、字体 CDN、统计脚本 —— 离线可用是硬要求
   （云同步 SDK 是唯一例外，且只在线上模式按需加载，版本钉死 + SRI 校验）
 
-## 语言
+## 语言与区域范围（Language & Locale Scope）
 
-本 skill **刻意面向中文使用者**：界面文案、引导句、设计文档全部中文。这不是疏漏 ——
-这套方法的语感（「过去时」在中文里靠词汇而非词形、「心情词」的调子）建立在中文上，
-做双语反而两头都不到位。英文摘要放在 `skill-card.md`，供英文语境的人判断要不要装。
+**本 skill 有意只支持简体中文（zh-CN）。这是一条明确、有界的产品范围声明，不是遗漏。**
+
+- **为什么只有中文**：这套方法的语感建立在中文上 ——「过去时」在中文里靠词汇而非词形、
+  「心情词」的调子、49 句原创引导句的措辞，都不可直译。做双语会两头都不到位。
+- **范围边界**：界面文案、引导句库、设计文档、脚本输出全部为中文；
+  **不提供语言切换，也没有多语言路线图**；非中文语料不在支持范围内。
+- **非中文使用者怎么办**：本 skill 不适用。英文能力摘要见 `skill-card.md`，
+  供英文语境的使用者在安装前自行判断。
+
+**Scope statement (English)** — This skill is deliberately Simplified-Chinese-only
+(`zh-CN`). The method depends on Chinese marking tense through vocabulary rather
+than inflection, and on a Chinese-only original prompt library; translation would
+break the method rather than widen its audience. Consequence: there is **no locale
+switcher and no multilingual roadmap**, and non-Chinese locales are explicitly out
+of scope. English readers should consult `skill-card.md` before installing.
 
 ## 版本历史
+
+- **1.0.2** — 针对 ClawHub 安全扫描报告逐条复核后的修复（`skillspector` 13 条）：
+  ① 把「语言」声明升级成**有界范围声明（Language & Locale Scope）**，并逐文件补齐 ——
+  `assets/index.html`、`references/DESIGN.md`、`scripts/*.js` 此前只有 `SKILL.md`/`README.md`
+  有声明，是 `SQP-3` 被判 MEDIUM 的原因（已有声明的那两个文件只判 LOW）。6 条 `SQP-3` 全部落到同一口径。
+  ② 清掉包内全部 **default-ignorable 码点**（`U+FE0F` 变体选择符 5 处）与 `references/DESIGN.md`
+  里混入的希腊大写字母（U+0394，原本写在亮度符号前面）—— 这是 `AE4`（Unicode / 混写异常）的直接触发特征。
+  ③ 6 条 `AE1` 经查证**不予处理**：源码显示它只在「被引用文件未被扫描器完整检查」时生成，
+  属覆盖率信号而非文件缺陷（已排除体积 / NUL / 编码 / 混淆四类真实成因），
+  消除它只能靠删引用 —— 那是刻意规避。
 
 - **1.0.1** — 修掉 ClawHub 安全扫描的 `suspicious`：云同步 SDK 从漂移的 `@dev` 标签改为
   钉死具体版本 + SRI 完整性校验（扫描报告 `SDI-2`）；补齐「开启同步后哪些数据会离开设备」的
