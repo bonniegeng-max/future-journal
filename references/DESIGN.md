@@ -7,11 +7,12 @@
 > 结构：**第 1–9 节**是设计系统本体，**附 A** 是无障碍基线（WCAG 2.2 AA）检查清单，
 > **附 B** 是不适用场景。
 >
-> **语言与区域范围**：本设计系统有意只服务**简体中文界面（zh-CN）**，字体栈、字重、
-> 行高与断行规则都是按中文排版调的；**不提供语言切换，也没有多语言路线图**。
-> *Locale scope: this design system intentionally targets Simplified Chinese (zh-CN)
-> UI only — the font stacks and typographic rules are tuned for Chinese typesetting,
-> with no locale switcher and no multilingual roadmap.*
+> **语言范围**：**默认简体中文（zh-CN）**，字体栈、字重、行高与断行规则按中文排版调校；
+> **同时兼容英文排版**——西文回退到栈内的 `Georgia` / `-apple-system`，中英混排不会掉字体。
+> 英文说明随包提供（`skill-card.md`）；需要其他语言的界面或句库可向作者提出。
+> *Language scope: default locale is zh-CN, with rules tuned for Chinese typesetting;
+> the stacks are bilingual and fall back to Georgia / -apple-system for Latin text.
+> English documentation ships with the skill; other locales are available on request.*
 >
 > ⚠ **本文档中的色值必须与 `assets/index.html` 的实现一致。** 第 2 节末尾有变量名对照表
 > （文档用 `--color-*` 语义名，实现用 `--ink` / `--accent` 等短名），改色时两处同时改，
@@ -178,6 +179,14 @@ toast 是全局唯一的反色浮层：`--color-ink` 底 + `--color-paper` 字�
 ```
 
 **分配规则**：衬线用于内容层（日期、引导句、用户书写内容、网格数字）；无衬线用于界面层（按钮、标签、说明、导航）。混用会立刻让页面"不像手账"。
+
+**语言范围 / Language scope**：字体栈按**中英双语**定义，不是中文单语栈 ——
+中文默认走 `Source Han Serif SC` / `PingFang SC`，**西文自动回退到栈内的 `Georgia`（衬线）
+与 `-apple-system` / `BlinkMacSystemFont`（无衬线）**，中英混排不会掉字体。
+界面文案默认简体中文，英文说明见 `skill-card.md`；用户如需其他语言的界面或句库可向作者提出。
+The stacks are bilingual: Chinese text resolves to the SC families, Latin text falls
+back to Georgia / -apple-system in the same declaration. Default UI locale is zh-CN;
+English documentation ships with the skill; other locales are available on request.
 
 ### Type Scale
 

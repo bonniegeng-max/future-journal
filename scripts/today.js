@@ -7,12 +7,13 @@
 //
 // 用途：不开页面也能知道今天要描哪一句 —— 适合写在实体本子上。
 //
-// 语言与区域范围 / Language & locale scope：
-// 本脚本读写的引导句库**有意只收录简体中文（zh-CN）**句子，命令行输出也用中文，
-// 因为其唯一数据源就是页面里的中文句库。**不提供语言切换，也没有多语言路线图**，
-// 非中文句库不在支持范围内。
-// This script's prompt library is intentionally Simplified-Chinese-only (zh-CN);
-// there is no locale switcher and no multilingual roadmap.
+// 语言范围 / Language scope：
+// 默认简体中文（zh-CN）——句库源自页面里的中文原创句库，命令行输出同为中文。
+// 英文说明随包提供（skill-card.md）；这里输出的日期/天数是语言无关的，
+// 用户书写内容不限语言（中英文皆可）。如需其他语言的句库可向作者提出。
+// Default locale: Simplified Chinese (zh-CN). English documentation ships with the
+// skill; the day/date output here is locale-independent and user entries are not
+// language-restricted. Other prompt-library languages are available on request.
 
 const fs = require('fs');
 const path = require('path');

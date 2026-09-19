@@ -8,14 +8,14 @@
 // 中文没有时态标记，靠肉眼检查「是不是过去时」非常不可靠 —— 所以把
 // 规则写成硬检查：禁止将来时标志词 + 必须带情绪词。改句库后跑一遍。
 //
-// 语言与区域范围 / Language & locale scope：
-// 本脚本的规则集**有意只针对简体中文（zh-CN）**——它检查的是中文特有的时态词汇
-// （「会」「将」「打算」等将来时标志词）和中文情绪词的搭配，这套规则对屈折语
-// 没有意义，也无法靠换词表移植。**不提供语言切换，也没有多语言路线图**，
-// 非中文语料不在支持范围内；判定结果只对中文引导句有效。
-// This checker intentionally applies Chinese (zh-CN) rules only: it targets
-// Chinese future-tense markers and Chinese emotion vocabulary. No locale
-// switcher, no multilingual roadmap — non-Chinese prompts are out of scope.
+// 语言范围 / Language scope：
+// 默认简体中文（zh-CN）——本脚本检查的是中文特有的时态词汇（「会」「将」「打算」
+// 等将来时标志词）与中文情绪词的搭配，判定结果只对中文引导句有效。
+// 英文说明随包提供（skill-card.md）；**用户书写内容不限语言**（中英文皆可），
+// 该规则集只作用于句库校验，不限制用户写什么。需要其他语言的句库可向作者提出。
+// Default locale: Simplified Chinese (zh-CN). The rules below validate the bundled
+// Chinese prompt library only; English documentation ships with the skill and user
+// entries are not language-restricted. Other prompt-library languages on request.
 
 const fs = require('fs');
 const path = require('path');

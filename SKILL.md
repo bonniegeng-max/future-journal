@@ -1,7 +1,7 @@
 ---
 name: future-journal
 description: 每日三分钟的书写工具——生成一本可离线填写的电子手账：先描（或照着打）一句引导句，再用过去时写下今天希望发生的事，最后挑一个心情词。49 天一轮、每周一个主题，含 49 句原创引导句库、质量闸门与页面回归测试。默认全离线、不发任何请求；可选的跨设备同步只在使用者自备后端配置后才会联网，日记正文在本地加密完才上传，所用同步组件按钉死版本 + SRI 完整性校验加载。Generate an offline single-file daily journal page (49-day cycle, weekly themes, trace-or-type a guided sentence then write in the past tense) with a bundled original prompt library and quality gates. Use when the user wants a fillable diary or journal page, a 未来日记 / 提前日记 / 晨间日记 / 感恩日记 tool, a printable journal, or asks what sentence to write today. Not for 任务与待办管理、日程排程、心情打卡统计，也不做心理健康或危机干预——本工具只提供书写页与引导句，不诊断、不建议、不替用户做决定。适用于「想开始写未来日记」「想要一本能打印的手账」「今天该写哪一句」「想用过去时写愿望」「总往坏处想、想把自己拉回来」「想在平板上用触控笔描一句」「想电脑手机换着写」等场景。
-version: 1.0.2
+version: 1.0.3
 homepage: https://clawhub.ai/bonniegeng-max/skills/future-journal
 license: MIT
 ---
@@ -267,23 +267,28 @@ var SDK_SRI = 'sha384-<该版本文件的 sha384>';
 
 ## 语言与区域范围（Language & Locale Scope）
 
-**本 skill 有意只支持简体中文（zh-CN）。这是一条明确、有界的产品范围声明，不是遗漏。**
+**默认简体中文（zh-CN）**，英文双语说明随包提供。界面与文档以中文为第一语言，英文可用。
 
-- **为什么只有中文**：这套方法的语感建立在中文上 ——「过去时」在中文里靠词汇而非词形、
-  「心情词」的调子、49 句原创引导句的措辞，都不可直译。做双语会两头都不到位。
-- **范围边界**：界面文案、引导句库、设计文档、脚本输出全部为中文；
-  **不提供语言切换，也没有多语言路线图**；非中文语料不在支持范围内。
-- **非中文使用者怎么办**：本 skill 不适用。英文能力摘要见 `skill-card.md`，
-  供英文语境的使用者在安装前自行判断。
+- **为什么默认中文**：这套方法的语感建立在中文上 ——「过去时」在中文里靠词汇而非词形、
+  「心情词」的调子、49 句原创引导句的措辞，都以中文为第一语言。
+- **中英双语**：包内提供英文能力摘要（`skill-card.md`）；**用户书写内容不限语言，中英文皆可**；
+  页面字体栈按中英双语定义（西文回退 `Georgia` / `-apple-system`），中英混排不会掉字体。
+- **其他语言**：界面文案与引导句库目前以中文为主；**需要其他语言的界面或句库，可向作者提出**。
 
-**Scope statement (English)** — This skill is deliberately Simplified-Chinese-only
-(`zh-CN`). The method depends on Chinese marking tense through vocabulary rather
-than inflection, and on a Chinese-only original prompt library; translation would
-break the method rather than widen its audience. Consequence: there is **no locale
-switcher and no multilingual roadmap**, and non-Chinese locales are explicitly out
-of scope. English readers should consult `skill-card.md` before installing.
+**Scope statement (English)** — Default locale is Simplified Chinese (`zh-CN`), with
+English documentation bundled (`skill-card.md`). User entries are **not
+language-restricted**: journal content may be written in Chinese or English. Font
+stacks are bilingual and fall back to Latin families for English text. Other
+interface languages or prompt libraries are **available on request**.
 
 ## 版本历史
+
+- **1.0.3** — 语言声明统一为**「默认中文 + 中英双语」**口径（1.0.2 里写成「只支持中文、
+  不提供语言切换」的方向是错的，反而压不下 `SQP-3`）。全文按同一口径重写：
+  `SKILL.md`（新增「中英双语」条目）、`README.md`、`assets/index.html`（`<html lang>` 处）、
+  `references/DESIGN.md`（引言 + 字体栈旁，如实说明**西文回退 `Georgia` / `-apple-system`、
+  中英混排不掉字体**）、`scripts/check-prompts.js`、`scripts/today.js`。
+  同时消除文档自相矛盾的「声称与行为不符」风险。
 
 - **1.0.2** — 针对 ClawHub 安全扫描报告逐条复核后的修复（`skillspector` 13 条）：
   ① 把「语言」声明升级成**有界范围声明（Language & Locale Scope）**，并逐文件补齐 ——
