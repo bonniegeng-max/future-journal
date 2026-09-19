@@ -1099,12 +1099,26 @@ async function restoreKey(){
   catch(e){ return null; }
 }
 
+/* 云同步 SDK 的来源必须钉死。
+   这段远端代码和本页同源执行，能读到 localStorage 里的日记正文和导出的加密密钥 ——
+   所以「加载哪一份」不能由 CDN 当下决定：
+     1) URL 锁到具体版本号，不用会漂移的 @dev 标签（上游随时重发，页面就换了一套代码）；
+     2) 带上 Subresource Integrity，字节对不上浏览器直接拒绝执行，连编译都不编译。
+   改动版本时必须同步重算下面的哈希，否则同步会静默失效（下方 onerror 会提示）。 */
+var SDK_URL = 'https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@0.1.1-dev.111acaf.202609102031/lib/index.global.js';
+var SDK_SRI = 'sha384-ueY+J3NvzLeU1kgRrmAiYltqJV0b09zjUgaoYacOB+yv/RXaHOq/iDrlnSwF2Ha9';
+
 function loadSDK(cb){
   if(window.WorkBuddyCloud) return cb();
   var s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js';
+  s.src = SDK_URL;
+  /* 用 setAttribute 而不是 s.integrity = …：integrity 的 IDL 反射不是所有引擎都有
+     （jsdom 就没有），写属性名则是各家都认的通用形态。 */
+  s.setAttribute('integrity', SDK_SRI);
+  s.setAttribute('crossorigin', 'anonymous');
+  s.setAttribute('referrerpolicy', 'no-referrer');
   s.onload = cb;
-  s.onerror = function(){ SYNC.msg = '同步组件没加载上，检查一下网络。'; renderSyncCard(); };
+  s.onerror = function(){ SYNC.msg = '同步组件没加载上。检查网络，或稍后重试。'; renderSyncCard(); };
   document.head.appendChild(s);
 }
 function withCloud(cb){
@@ -1260,7 +1274,13 @@ function renderSyncCard(){
   var box = document.getElementById('syncBody');
   if(!box) return;
   if(!SYNC.cfg){
-    box.innerHTML = '<p style="font-size:13.5px;color:var(--ink-2)">可选功能：登录后可以把这本日记在多台设备之间同步。内容在本机加密完才上传，服务器只存密文。</p>'
+    box.innerHTML = '<p style="font-size:13.5px;color:var(--ink-2)">可选功能：登录后可以把这本日记在多台设备之间同步。'
+      + '内容在本机加密完才上传，服务器只存密文。</p>'
+      + '<p style="font-size:13.5px;color:var(--ink-2);margin-top:8px">'
+      + '<b>开启后会产生网络请求</b>：页面会从 cdn.jsdelivr.net 下载一次同步组件'
+      + '（版本已锁定并做完整性校验），登录与同步请求发往<b>你自己填的后端</b>。'
+      + '登录会把邮箱和会话令牌发出设备；日记正文则是加密之后才发。'
+      + '不填这段配置，页面不联网。</p>'
       + '<textarea id="cfgIn" rows="2" placeholder="粘贴同步配置串" style="margin-top:12px;font-size:16px"></textarea>'
       + '<button class="btn small" id="cfgSave" style="margin-top:8px">保存配置</button>';
     document.getElementById('cfgSave').onclick = function(){

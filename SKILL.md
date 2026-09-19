@@ -1,7 +1,7 @@
 ---
 name: future-journal
-description: 每日三分钟的书写工具——生成一本可离线填写的电子手账：先描（或照着打）一句引导句，再用过去时写下今天希望发生的事，最后挑一个心情词。49 天一轮、每周一个主题，含 49 句原创引导句库、质量闸门与页面回归测试，可选端到端加密的跨设备同步。Generate an offline single-file daily journal page (49-day cycle, weekly themes, trace-or-type a guided sentence then write in the past tense) with a bundled original prompt library and quality gates. Use when the user wants a fillable diary or journal page, a 未来日记 / 提前日记 / 晨间日记 / 感恩日记 tool, a printable journal, or asks what sentence to write today. Not for 任务与待办管理、日程排程、心情打卡统计，也不做心理健康或危机干预——本工具只提供书写页与引导句，不诊断、不建议、不替用户做决定。适用于「想开始写未来日记」「想要一本能打印的手账」「今天该写哪一句」「想用过去时写愿望」「总往坏处想、想把自己拉回来」「想在平板上用触控笔描一句」「想电脑手机换着写」等场景。
-version: 1.0.0
+description: 每日三分钟的书写工具——生成一本可离线填写的电子手账：先描（或照着打）一句引导句，再用过去时写下今天希望发生的事，最后挑一个心情词。49 天一轮、每周一个主题，含 49 句原创引导句库、质量闸门与页面回归测试。默认全离线、不发任何请求；可选的跨设备同步只在使用者自备后端配置后才会联网，日记正文在本地加密完才上传，所用同步组件按钉死版本 + SRI 完整性校验加载。Generate an offline single-file daily journal page (49-day cycle, weekly themes, trace-or-type a guided sentence then write in the past tense) with a bundled original prompt library and quality gates. Use when the user wants a fillable diary or journal page, a 未来日记 / 提前日记 / 晨间日记 / 感恩日记 tool, a printable journal, or asks what sentence to write today. Not for 任务与待办管理、日程排程、心情打卡统计，也不做心理健康或危机干预——本工具只提供书写页与引导句，不诊断、不建议、不替用户做决定。适用于「想开始写未来日记」「想要一本能打印的手账」「今天该写哪一句」「想用过去时写愿望」「总往坏处想、想把自己拉回来」「想在平板上用触控笔描一句」「想电脑手机换着写」等场景。
+version: 1.0.1
 homepage: https://clawhub.ai/bonniegeng-max/skills/future-journal
 license: MIT
 ---
@@ -176,8 +176,8 @@ node scripts/check-prompts.js
 
 | 行为 | 何时发生 | 去向 | 传了什么 |
 |---|---|---|---|
-| 加载云同步 SDK | **仅当**使用者自己粘贴了配置串、且页面从 `http(s)://` 打开 | `cdn.jsdelivr.net` 上的 `@tencent-ai/workbuddy-cloud-sdk` | 只下载代码，不上传 |
-| 发验证码 / 维持登录态 | 使用者主动点登录 | 使用者**自己配置的**后端 | 邮箱、会话令牌 |
+| 下载云同步 SDK | **仅当**使用者自己粘贴了配置串、且页面从 `http(s)://` 打开 | `cdn.jsdelivr.net` 上的 `@tencent-ai/workbuddy-cloud-sdk`（版本号钉死 + SRI 完整性校验） | 只下载代码，不上传 |
+| 发验证码 / 维持登录态 | 使用者主动点登录 | 使用者**自己配置的**后端 | 邮箱、会话令牌（会离开设备） |
 | 上传日记 | 使用者设了同步密码之后写入内容 | 使用者**自己配置的**后端 | **只有密文**（在本机加密完才发） |
 
 这个表以外，没有别的：
@@ -186,6 +186,27 @@ node scripts/check-prompts.js
 - **无硬编码的服务器地址或密钥**：`endpoint` / `publishableKey` 一律由使用者自备
 - 不配同步时：页面从 `file://` 打开，**一个网络请求都不发**（SDK 根本不加载）
 - `scripts/today.js`、`scripts/check-prompts.js`、`references/DESIGN.md` 全程纯本地
+
+### 远端 SDK 必须钉版本 + 校验完整性
+
+`assets/index.html` 里的 `SDK_URL` / `SDK_SRI` 是一对**必须同进同退**的常量：
+
+```js
+var SDK_URL = '…/@tencent-ai/workbuddy-cloud-sdk@<具体版本>/lib/index.global.js';
+var SDK_SRI = 'sha384-<该版本文件的 sha384>';
+```
+
+为什么这条是硬约束：这段远端代码和页面**同源执行**，能读到 localStorage 里的日记正文、
+`fj-cfg` 里的后端地址与 key、以及导出的加密密钥 `fj-dk`。所以「加载哪一份」不能由 CDN
+当下决定。用 `@dev` 这类漂移标签，等于**审核时的那份代码和用户实际执行的可以是两份**。
+
+- 改版本 → 必须用 `hashlib.sha384` 对新文件重算哈希并写回 `SDK_SRI`
+- 忘了改 → 同步会静默失效（`onerror` 会给出提示，不会留半截界面）
+- `scripts/test-journal.js` 的 **D 组**会卡住这个约定；`@dev` / `@latest` 一出现就失败
+- `<script>` 上的三个属性缺一不可：`integrity`（不放行改动过的字节）、
+  `crossorigin="anonymous"`（SRI 需要 CORS 取文件）、`referrerpolicy="no-referrer"`
+- 用 `setAttribute` 写而不是 `s.integrity = …`：后者的 IDL 反射不是所有引擎都有
+
 
 > 那句话「加载远程脚本」确实是扫描器会多看两眼的模式——所以页面把它做成
 > **必须先有人粘贴配置串才会发生**，不是打开就跑。这是刻意的，改的时候别把它提前。
@@ -242,4 +263,18 @@ node scripts/check-prompts.js
 - 不做推送提醒（页面关闭即止，做不到）。想每天被提醒，用 WorkBuddy 的定时任务推当天引导句
 - 不做暗色模式（纸质手账没有暗色版）
 - 不引入任何第三方图标库、字体 CDN、统计脚本 —— 离线可用是硬要求
-  （云同步 SDK 是唯一例外，且只在线上模式按需加载）
+  （云同步 SDK 是唯一例外，且只在线上模式按需加载，版本钉死 + SRI 校验）
+
+## 语言
+
+本 skill **刻意面向中文使用者**：界面文案、引导句、设计文档全部中文。这不是疏漏 ——
+这套方法的语感（「过去时」在中文里靠词汇而非词形、「心情词」的调子）建立在中文上，
+做双语反而两头都不到位。英文摘要放在 `skill-card.md`，供英文语境的人判断要不要装。
+
+## 版本历史
+
+- **1.0.1** — 修掉 ClawHub 安全扫描的 `suspicious`：云同步 SDK 从漂移的 `@dev` 标签改为
+  钉死具体版本 + SRI 完整性校验（扫描报告 `SDI-2`）；补齐「开启同步后哪些数据会离开设备」的
+  前端告知与文档说明（`SDI-1`）；声明中文优先是有意为之（`SQP-3`）。回归测试新增 D 组，44 条全过。
+- **1.0.0** — 首次发布。
+

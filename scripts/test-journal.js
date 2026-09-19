@@ -1,10 +1,11 @@
 /* 未来日记 · 页面回归测试
  * 跑法：NODE_PATH=<node workspace>/node_modules <node> scripts/test-journal.js
  *
- * 三组：
+ * 四组：
  *   A. 数据不丢（写作框自动落盘 / 刷新还原 / 防抖窗口内切 tab）
  *   B. 无障碍与键盘可达（WCAG 2.2 AA 相关结构）
  *   C. 降级路径（拿不到 2D 上下文时不崩、退回打字模式）
+ *   D. 云同步 SDK 的加载约束（版本钉死 + SRI 完整性校验）
  *
  * 注意：jsdom 不实现 canvas 2D，getContext('2d') 恒返回 null —— 这正好用来
  * 覆盖 C 组的降级分支。A/B 组不受影响。
@@ -170,6 +171,30 @@ const T = (v) => `[data-v="${v}"]`;
   check('自动退回打字模式', d.getElementById('typeWrap').hidden === false && d.getElementById('traceWrap').hidden === true);
   check('给出可读提示', /照着打一遍/.test(d.getElementById('toast').textContent), JSON.stringify(d.getElementById('toast').textContent));
   check('C 组无 JS 报错', errs.length === 0, errs.join(' | '));
+
+  /* ================= D. 远端 SDK 的加载约束 ================= */
+  /* 为什么单立一组：这段远端代码和页面同源跑，能读到 localStorage 里的日记正文
+     和导出的加密密钥。ClawHub 安全扫描曾据此判 suspicious（unpinned dev tag +
+     no integrity check）。钉版本和 SRI 一旦被谁顺手改回去，发布包会重新被标，
+     所以这里锁死 —— 改 SDK 版本必须同步改这一组的期望值。 */
+  console.log('\n[D] 云同步 SDK：钉版本 + 完整性校验');
+  check('源码里没有会漂移的 @dev 标签', !/workbuddy-cloud-sdk@dev/.test(HTML));
+  check('没有 @latest / 无版本号的引用', !/workbuddy-cloud-sdk@(latest|\/)/.test(HTML));
+  const pinned = HTML.match(/workbuddy-cloud-sdk@([0-9][^/'"]*)\//);
+  check('SDK 版本号被钉死到具体版本', !!pinned, pinned ? pinned[1] : '没匹配到版本号');
+  const sri = HTML.match(/SDK_SRI\s*=\s*'([^']+)'/);
+  check('声明了 SRI 哈希', !!sri && /^sha384-[A-Za-z0-9+/=]{64}$/.test(sri[1]), sri ? sri[1].slice(0, 22) + '…' : '缺');
+
+  ({ w, d, errs } = boot(seed));
+  let sdkErr = null;
+  try { w.loadSDK(function () {}); } catch (e) { sdkErr = e; }
+  check('loadSDK 不抛错', sdkErr === null, sdkErr ? String(sdkErr.message) : '无异常');
+  const tag = d.head.querySelector('script[src*="workbuddy-cloud-sdk"]');
+  check('真的插入了 SDK script 标签', !!tag);
+  check('插入的标签带 integrity', !!tag && /^sha384-/.test(tag.getAttribute('integrity') || ''), tag ? tag.getAttribute('integrity') : '无');
+  check('插入的标签带 crossOrigin（SRI 走 CORS 取文件）', !!tag && tag.getAttribute('crossorigin') === 'anonymous', tag ? tag.getAttribute('crossorigin') : '无');
+  check('插入的标签 src 是钉死版本、非 @dev', !!tag && /workbuddy-cloud-sdk@[0-9]/.test(tag.getAttribute('src') || '') && !/@dev/.test(tag.getAttribute('src') || ''), tag ? tag.getAttribute('src') : '无');
+  check('D 组无 JS 报错', errs.length === 0, errs.join(' | '));
 
   console.log(`\n===== ${pass}/${pass + fail} 通过 =====`);
   process.exit(fail ? 1 : 0);

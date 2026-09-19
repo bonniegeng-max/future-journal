@@ -67,11 +67,11 @@ make decisions for the user. It only produces prompts and a writing surface.
 
 **Output Parameters:** [1D]
 
-**Other Properties Related to Output:** [The HTML page is single-file, offline-capable, mobile-first, and WCAG 2.2 AA compliant for text contrast, keyboard access and focus visibility. It can also be printed.]
+**Other Properties Related to Output:** [The HTML page is a single file whose core features need no network, is mobile-first, and is WCAG 2.2 AA compliant for text contrast, keyboard access and focus visibility. It can also be printed. Optional cloud sync is off by default and does not load any remote code until the user pastes their own backend config; when enabled it downloads one version-pinned, SRI-verified SDK and sends only client-side-encrypted ciphertext to the user's own backend (email and session token leave the device on login).]
 
 ## Skill Version(s):
 
-1.0.0 (source: frontmatter, README.md)
+1.0.1 (source: frontmatter, README.md)
 
 ## Ethical Considerations:
 
