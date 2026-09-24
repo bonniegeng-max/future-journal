@@ -1,11 +1,12 @@
 /* 未来日记 · 页面回归测试
  * 跑法：NODE_PATH=<node workspace>/node_modules <node> scripts/test-journal.js
  *
- * 四组：
+ * 五组：
  *   A. 数据不丢（写作框自动落盘 / 刷新还原 / 防抖窗口内切 tab）
  *   B. 无障碍与键盘可达（WCAG 2.2 AA 相关结构）
  *   C. 降级路径（拿不到 2D 上下文时不崩、退回打字模式）
  *   D. 云同步 SDK 的加载约束（版本钉死 + SRI 完整性校验）
+ *   E. 新设备开同步（欢迎页进得去设置，且不影响已开始设备）
  *
  * 注意：jsdom 不实现 canvas 2D，getContext('2d') 恒返回 null —— 这正好用来
  * 覆盖 C 组的降级分支。A/B 组不受影响。
@@ -18,6 +19,12 @@ const HTML_PATH = path.join(__dirname, '..', 'assets', 'index.html');
 const HTML = fs.readFileSync(HTML_PATH, 'utf8');
 const KEY = 'future-journal-v1';
 const URL_ = 'https://fj.test/';
+/* 把「今天」钉死在这一天，测试才可重复。
+   页面用真实日期算第几天（curDay()），而下面 A/B 组的起始日是写死的：
+   A 组起始 2026-09-19 当作第 1 天、B 组起始 2026-09-18 当作第 2 天。
+   不钉的话，测试每过一天就自己烂掉 —— 2026-09-20 之后 A 组直接崩，
+   而「测试挂了」和「测试过了」看起来一样糟。 */
+const FIXED_TODAY = [2026, 8, 19, 10, 0, 0];   // 月份 0-based：本地时间 2026-09-19 10:00
 
 let pass = 0, fail = 0;
 function check(name, ok, detail) {
@@ -33,6 +40,19 @@ function boot(saved) {
     url: URL_,
     pretendToBeVisual: true,
     beforeParse(window) {
+      // 钉住 Date：无参构造返回固定时刻，带参的照常。用本地时间分量构造，
+      // 这样换时区跑结果也一样。
+      const RealDate = window.Date;
+      const FIXED = new RealDate(...FIXED_TODAY).getTime();
+      function FixedDate(...args) {
+        if (!(this instanceof FixedDate)) return new RealDate(FIXED).toString();
+        return args.length === 0 ? new RealDate(FIXED) : new RealDate(...args);
+      }
+      FixedDate.prototype = RealDate.prototype;   // instanceof 仍然成立
+      FixedDate.now = () => FIXED;
+      FixedDate.parse = RealDate.parse;
+      FixedDate.UTC = RealDate.UTC;
+      window.Date = FixedDate;
       if (saved) for (const [k, v] of Object.entries(saved)) window.localStorage.setItem(k, v);
       window.addEventListener('error', (e) => errs.push(String(e.message || e.error)));
     },
@@ -195,6 +215,35 @@ const T = (v) => `[data-v="${v}"]`;
   check('插入的标签带 crossOrigin（SRI 走 CORS 取文件）', !!tag && tag.getAttribute('crossorigin') === 'anonymous', tag ? tag.getAttribute('crossorigin') : '无');
   check('插入的标签 src 是钉死版本、非 @dev', !!tag && /workbuddy-cloud-sdk@[0-9]/.test(tag.getAttribute('src') || '') && !/@dev/.test(tag.getAttribute('src') || ''), tag ? tag.getAttribute('src') : '无');
   check('D 组无 JS 报错', errs.length === 0, errs.join(' | '));
+
+  /* ================= E. 新设备开同步 ================= */
+  /* 为什么单立一组：底部 tab 栏是「这一轮开始之后」才出现的（show() 里
+     tabbar.hidden = !S）。落地页以前没有别的出口 —— 新设备想在手机上看，
+     进不去设置、开不了同步，而落地页的文案又叫她去「设置」。这组锁住那条路。 */
+  console.log('\n[E] 新设备：欢迎页能进设置开同步');
+  ({ w, d, errs } = boot(null));
+
+  const goSync = d.getElementById('btnGoSync');
+  check('欢迎页给出去设置的入口', !!goSync && goSync.tagName === 'BUTTON' && goSync.tabIndex >= 0);
+  goSync.onclick();
+  check('能进到设置页', d.getElementById('view-settings').classList.contains('on'));
+  check('还没开始一轮时 tab 栏不出现（今日/轨道此时是空的）', d.getElementById('tabbar').hidden === true);
+  check('设置页渲染出同步卡（改前 renderSettings 在 !S 时提前 return，卡片是白的）',
+    /粘贴同步配置串/.test(d.getElementById('syncBody').innerHTML));
+  check('跟记录有关的卡片整张藏起来',
+    ['cardBackup', 'cardPrint', 'cardRound'].every((id) => d.getElementById(id).hidden === true));
+  check('给一个回得去的出口', d.getElementById('btnBackSetup').hidden === false);
+  d.getElementById('btnBackSetup').onclick();
+  check('点返回回到欢迎页', d.getElementById('view-setup').classList.contains('on'));
+  check('E 组无 JS 报错', errs.length === 0, errs.join(' | '));
+
+  // 已经开始了的设备：这些出口都不该出现，原有路径不受影响
+  ({ w, d, errs } = boot(seed));
+  check('已开始的设备上「回到开始这一页」不出现', d.getElementById('btnBackSetup').hidden === true);
+  check('已开始的设备上 tab 栏照常出现', d.getElementById('tabbar').hidden === false);
+  check('已开始的设备上记录卡片照常显示',
+    ['cardBackup', 'cardPrint', 'cardRound'].every((id) => d.getElementById(id).hidden === false));
+  check('E 组第二程无 JS 报错', errs.length === 0, errs.join(' | '));
 
   console.log(`\n===== ${pass}/${pass + fail} 通过 =====`);
   process.exit(fail ? 1 : 0);

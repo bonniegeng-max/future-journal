@@ -1,7 +1,7 @@
 ---
 name: future-journal
 description: 每日三分钟的书写工具——生成一本可离线填写的电子手账：先描（或照着打）一句引导句，再用过去时写下今天希望发生的事，最后挑一个心情词。49 天一轮、每周一个主题，含 49 句原创引导句库、质量闸门与页面回归测试。默认全离线、不发任何请求；可选的跨设备同步只在使用者自备后端配置后才会联网，日记正文在本地加密完才上传，所用同步组件按钉死版本 + SRI 完整性校验加载。Generate an offline single-file daily journal page (49-day cycle, weekly themes, trace-or-type a guided sentence then write in the past tense) with a bundled original prompt library and quality gates. Use when the user wants a fillable diary or journal page, a 未来日记 / 提前日记 / 晨间日记 / 感恩日记 tool, a printable journal, or asks what sentence to write today. Not for 任务与待办管理、日程排程、心情打卡统计，也不做心理健康或危机干预——本工具只提供书写页与引导句，不诊断、不建议、不替用户做决定。适用于「想开始写未来日记」「想要一本能打印的手账」「今天该写哪一句」「想用过去时写愿望」「总往坏处想、想把自己拉回来」「想在平板上用触控笔描一句」「想电脑手机换着写」等场景。
-version: 1.0.3
+version: 1.0.4
 homepage: https://clawhub.ai/bonniegeng-max/skills/future-journal
 license: MIT
 ---
@@ -149,6 +149,10 @@ node scripts/check-prompts.js
 
 其他约定：
 
+- **换设备（新设备上还没开始过这一轮）**：落地页有「去开启同步」入口，不用先硬开一轮
+  就能进设置。底部 tab 栏此时不出现 —— 那是 `show()` 里 `tabbar.hidden = !S` 的既定行为，
+  所以设置页另给了一个「回到开始这一页」的出口。同步下来起始日取两边**较早**的那个，
+  进度不会被新开的日期带偏
 - 首次登录后要用户自己设「同步密码」，不自动生成 —— 他要能在别的设备上手输同一个
 - 推送是**写完后延迟合并触发**（`schedulePush`），不是每次按键
 - 冲突用 `mergeStates` 合并：按天取 `at` 较新的一条，「3 个想要的」按文本取并集
@@ -283,6 +287,14 @@ interface languages or prompt libraries are **available on request**.
 
 ## 版本历史
 
+- **1.0.4** — 修掉「**换设备的人开不了同步**」的死锁：底部 tab 栏要等这一轮开始之后才出现
+  （`show()` 里 `tabbar.hidden = !S`），而落地页以前没有别的出口 —— 新设备上只能看到
+  「开始这一轮」，设置进不去，可落地页的文案又叫用户去「设置」。现在落地页新增
+  「去开启同步」入口、设置页新增「回到开始这一页」，同步真拿到记录后自动进「今日」。
+  同一条路上还修了两处：设置页在「还没开始一轮」时整片空白（`renderSettings()` 提前 return）、
+  以及保存同步配置后登录按钮是死的（同步组件要等刷新页面才装载）。
+  回归测试补 E 组 12 条断言守住这条路径，并修掉测试自身从 2026-09-20 起静默失效的
+  日历耦合问题（起始日写死、天数用真实日期算）。
 - **1.0.3** — 语言声明统一为**「默认中文 + 中英双语」**口径（1.0.2 里写成「只支持中文、
   不提供语言切换」的方向是错的，反而压不下 `SQP-3`）。全文按同一口径重写：
   `SKILL.md`（新增「中英双语」条目）、`README.md`、`assets/index.html`（`<html lang>` 处）、

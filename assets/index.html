@@ -234,6 +234,11 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outli
     </div>
     <button class="btn primary wide" id="btnStart">开始这一轮</button>
     <p class="hint center">默认所有内容只存在你这台设备的浏览器里。只有在「设置」里自己开通同步之后，内容才会加密上传到你自己的空间。</p>
+    <div class="card">
+      <h2>已经在别的设备上开始了？</h2>
+      <p style="font-size:13.5px;color:var(--ink-2)">开启同步，就能把那本日记接到这台设备上接着写，不用在这儿重新开始一轮。</p>
+      <button class="btn small" id="btnGoSync" style="margin-top:12px">去开启同步</button>
+    </div>
   </section>
 
   <section class="view" id="view-today">
@@ -302,11 +307,12 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outli
   </section>
 
   <section class="view" id="view-settings">
+    <button class="btn small ghost" id="btnBackSetup" hidden style="margin-bottom:12px">← 回到开始这一页</button>
     <div class="card" id="syncCard">
       <h2>跨设备同步</h2>
       <div id="syncBody"></div>
     </div>
-    <div class="card">
+    <div class="card" id="cardBackup">
       <h2>备份</h2>
       <p style="font-size:13.5px;color:var(--ink-2)">内容只存在这台设备的浏览器里。换设备或清理浏览器数据前，先导出一份。</p>
       <div class="row" style="margin-top:12px">
@@ -315,12 +321,12 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outli
       </div>
       <input type="file" id="fileImport" accept=".json" hidden>
     </div>
-    <div class="card">
+    <div class="card" id="cardPrint">
       <h2>打印成手账</h2>
       <p style="font-size:13.5px;color:var(--ink-2)">在打印对话框里选择「存储为 PDF」，可以印成实体手账。</p>
       <button class="btn small" id="btnPrint" style="margin-top:12px">打印 / 存 PDF</button>
     </div>
-    <div class="card">
+    <div class="card" id="cardRound">
       <h2>这一轮</h2>
       <p style="font-size:13.5px;color:var(--ink-2)" id="setupInfo"></p>
       <button class="btn small danger" id="btnReset" style="margin-top:12px">重新开始一轮</button>
@@ -997,10 +1003,17 @@ function renderReview(){
 
 /* ---------- settings ---------- */
 function renderSettings(){
-  if(!S) return;
-  var el = document.getElementById('setupInfo');
-  var day = Math.min(curDay(), TOTAL);
-  el.textContent = '从 '+S.startDate+' 开始，今天是第 '+day+' 天，已写 '+doneCount()+' 页。';
+  /* 还没开始这一轮时也要能进设置（欢迎页的「去开启同步」会走到这儿），
+     所以这里不能 return。跟记录有关的卡片整张藏起来，只留同步。 */
+  document.getElementById('cardBackup').hidden = !S;
+  document.getElementById('cardPrint').hidden = !S;
+  document.getElementById('cardRound').hidden = !S;
+  document.getElementById('btnBackSetup').hidden = !!S;
+  if(S){
+    var el = document.getElementById('setupInfo');
+    var day = Math.min(curDay(), TOTAL);
+    el.textContent = '从 '+S.startDate+' 开始，今天是第 '+day+' 天，已写 '+doneCount()+' 页。';
+  }
   renderSyncCard();
 }
 
@@ -1050,6 +1063,23 @@ for(var i=0;i<tabs.length;i++){
     };
   })(tabs[i].getAttribute('data-v'));
 }
+
+/* 从欢迎页进设置（新设备开同步）。这时候还没有 S，底部 tab 栏不出现，
+   所以给一个「回到开始这一页」，等同步真拿到记录后再自动进「今日」。 */
+var fromSetup = false;
+function maybeLeaveSetup(){
+  if(!fromSetup) return;
+  if(!S || !S.startDate) return;
+  fromSetup = false;
+  initSetup();                                  // 让欢迎页反映合并进来的这一轮
+  show('today');
+}
+document.getElementById('btnGoSync').onclick = function(){
+  fromSetup = true; renderSettings(); show('settings');
+};
+document.getElementById('btnBackSetup').onclick = function(){
+  fromSetup = false; show('setup');
+};
 
 window.addEventListener('resize', function(){
   if(trace.on && trace.W && trace.canvas){
@@ -1164,6 +1194,7 @@ function mergeStates(local, remote){
 
 async function pushNow(silent){
   if(!SYNC.cloud || !SYNC.user || !SYNC.key || SYNC.busy) return;
+  if(!S || !S.startDate){ if(!silent) toast('这台设备上还没有记录'); return; }
   SYNC.busy = true;
   try{
     var cipher = await seal(SYNC.key, S);
@@ -1199,10 +1230,11 @@ async function syncNow(silent){
       var remote = await unseal(SYNC.key, cur.data.cipher);
       S = mergeStates(S, remote);
       persist();
-      renderToday(); renderTrack(); renderReview();
+      if(S && S.startDate){ renderToday(); renderTrack(); renderReview(); }
+      maybeLeaveSetup();
     }
-    await pushNow(true);
-    if(!silent) toast('同步完成');
+    if(S && S.startDate) await pushNow(true);
+    if(!silent) toast(S && S.startDate ? '同步完成' : '云端还没有记录');
   }catch(e){
     if(!silent) toast('同步失败：' + ((e && e.message) || '未知错误'));
   }
@@ -1220,16 +1252,21 @@ async function unlockWithPassword(pw){
       var remote = await unseal(key, cur.data.cipher);
       SYNC.key = key; await storeKey(key);
       S = mergeStates(S, remote); persist();
-      renderToday(); renderTrack(); renderReview();
+      if(S && S.startDate){ renderToday(); renderTrack(); renderReview(); }
       toast('已解锁，云端记录合并进来了');
+      maybeLeaveSetup();
     }catch(e){
       toast('这个密码解不开云端的记录。换设备请填同一个密码，新设备要设新密码请先清空云端');
       return;
     }
   }else{
     SYNC.key = key; await storeKey(key);
-    await pushNow(true);
-    toast('同步密码已设置，记录已加密上传');
+    if(S && S.startDate){
+      await pushNow(true);
+      toast('同步密码已设置，记录已加密上传');
+    }else{
+      toast('同步密码已设置。云端还没有记录，回到开始那一页写一轮就会自动上传');
+    }
   }
   renderSyncCard();
 }
@@ -1299,6 +1336,9 @@ function renderSyncCard(){
         if(!o.endpoint || !o.publishableKey) throw new Error('缺字段');
         localStorage.setItem('fj-cfg', JSON.stringify(o));
         SYNC.cfg = o; renderSyncCard(); toast('配置已保存');
+        /* 立刻把同步组件装上：不然刚粘贴完配置就点登录，按钮是死的
+           （SYNC.cloud 还是 null），得手动刷新页面才行。 */
+        initSync();
       }catch(e){ toast('这段配置读不出来'); }
     };
     return;

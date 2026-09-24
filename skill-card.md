@@ -71,7 +71,7 @@ make decisions for the user. It only produces prompts and a writing surface.
 
 ## Skill Version(s):
 
-1.0.3 (source: frontmatter, README.md)
+1.0.4 (source: frontmatter, README.md)
 
 ## Ethical Considerations:
 
